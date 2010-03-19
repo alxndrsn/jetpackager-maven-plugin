@@ -3,6 +3,7 @@ package net.frontlinesms.build.jet.maven;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Set;
 
@@ -28,8 +29,10 @@ import org.apache.maven.project.MavenProject;
 public class JetBuildMojo extends AbstractMojo {
 	private static final File COMPILE_WORKINGDIRECTORY = new File("target/jet-packager/compile");
 	private static final File COMPILE_RESOURCEDIRECTORY = new File(COMPILE_WORKINGDIRECTORY, "resources");
-	private static final File RESOURCE_SPLASH_IMAGE = new File(COMPILE_RESOURCEDIRECTORY, "splash.jpg");
+	private static final String SPLASH_IMAGE_PATH = "resources/splash.jpg";
+	private static final File RESOURCE_SPLASH_IMAGE = new File(COMPILE_WORKINGDIRECTORY, SPLASH_IMAGE_PATH);
 	private static final File RESOURCE_PROGRAM_ICON = new File(COMPILE_RESOURCEDIRECTORY, "icon.ico");
+	private static final String JPN_FILE_PATH = "temp/frontlinesms.jpn";
 
 	private static final File PACK_WORKINGDIRECTORY = new File("target/jet-packager/pack");
 
@@ -41,11 +44,29 @@ public class JetBuildMojo extends AbstractMojo {
      */
     private MavenProject project;
     /** The splash image used when the compiled program is starting up.
-     * @parameter */
+     * @parameter
+     * @required */
     private File splashImage;
     /** The program icon used for the .exe file of the compiled program.
-     * @parameter */
+     * @parameter
+     * @required */
     private File programIcon;
+    /** The main java class, called to run the program.
+     * @parameter
+     * @required */
+    private String javaMainClass;
+    /** The vendor of the program.
+     * @parameter
+     * @required */
+    private String programVendor;
+    /** The year(s) copyright is asserted for.  This will default to the current year.  Couldn't really
+     * do that with the standard default-value tag.
+     * @parameter */
+    private String copyrightYear;
+    /** The name of the .exe file that will be generated.  This should not include the file extension.
+     * @parameter
+     * @required */
+    private String programExecutableName;
 	
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		getLog().info("Starting JetBuild Mojo...");
@@ -86,9 +107,7 @@ public class JetBuildMojo extends AbstractMojo {
 
 		// Copy compile resources to the working directory
 		try {
-			if(this.splashImage == null) throw new JetCompileException("splashImage not set.");
 			FileUtils.copyFile(this.splashImage, RESOURCE_SPLASH_IMAGE);
-			if(this.programIcon == null) throw new JetCompileException("programIcon not set.");
 			FileUtils.copyFile(this.programIcon, RESOURCE_PROGRAM_ICON);
 		} catch(IOException ex) {
 			throw new JetCompileException("Problem copying compile resource.", ex);
@@ -97,62 +116,28 @@ public class JetBuildMojo extends AbstractMojo {
 	
 	private JetCompileProfile getCompileProfile() {
 		return new JetCompileProfile(COMPILE_WORKINGDIRECTORY,
-				getJpnPath(), getJavaMainClass(),
-				getOutputName(), getSplashImagePath(),
+				JPN_FILE_PATH, getJavaMainClass(),
+				getOutputName(), SPLASH_IMAGE_PATH,
 				getVersionInfoCompanyName(), getVersionInfoFileDescription(),
 				getVersionInfoCopyrightYear(), getVersionInfoCopyrightOwner(),
 				getVersionInfoProductName(), getVersionInfoNumber());
 	}
 
-	private String getJpnPath() {
-		// TODO Auto-generated method stub
-		return null;
+//> COMPILE VARIABLE ACCESSORS
+	private String getJavaMainClass() { return javaMainClass; }
+	private String getOutputName() { return this.programExecutableName; }
+	private String getVersionInfoCompanyName() { return this.programVendor; }
+	private String getVersionInfoFileDescription() { return this.programExecutableName; }
+	private String getVersionInfoCopyrightYear() { 
+		if(this.copyrightYear != null) {
+			return this.copyrightYear;
+		} else {
+			return Integer.toString(Calendar.getInstance().get(Calendar.YEAR));
+		}
 	}
-
-	private String getJavaMainClass() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private String getOutputName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private String getSplashImagePath() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private String getVersionInfoCompanyName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private String getVersionInfoFileDescription() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private String getVersionInfoCopyrightYear() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private String getVersionInfoCopyrightOwner() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private String getVersionInfoProductName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private String getVersionInfoNumber() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	private String getVersionInfoCopyrightOwner() { return this.programVendor; }
+	private String getVersionInfoProductName() { return this.programExecutableName; }
+	private String getVersionInfoNumber() { return getNormalisedVersionNumber(); }
 
 //> PACKING METHODS
 	private void doPack() throws JetPackException {
@@ -240,6 +225,35 @@ public class JetBuildMojo extends AbstractMojo {
 				FileUtils.copyFile(artifactFile, new File(targetDirectory, artifactFile.getName()));
 			}
 		}
+	}
+
+//	private static final String _1_9_1_D_0_3_1_9_1_D_$ = "^([1-9]{1}\\d*\\.){0,3}[1-9]{1}\\d*$";
+	private static final String _1_9_1_D_0_3_1_9_1_D_$ = "^(0|([1-9]{1}\\d*\\.)){0,3}(0|([1-9]{1}\\d*))$";
+	
+	String getNormalisedVersionNumber() {
+		String version = this.project.getVersion();
+//		if(version.matches(_1_9_1_D_0_3_1_9_1_D_$)) {
+//			return version;
+//		} else {
+			// remove all non-digits and points
+			version = version.replaceAll("[^\\d\\.]", "");
+			// remove all excess zeros from the start
+			while(version.matches("^0\\d+\\..*")) {
+				version = version.substring(1);
+			}
+			// remove all excess zeros from after dot characters
+//			version = version.replaceAll("\\.0(0+)", "\\.0");
+			version = version.replaceAll("\\.0+(\\d+)", "\\.$1");
+			if(version.length() > 0) {
+//				System.out.println("Version: " + version);
+//				if(!version.matches(_1_9_1_D_0_3_1_9_1_D_$)) {
+//					throw new IllegalArgumentException(
+//							"Failed to normalise version number: " + this.project.getVersion() + "->" + version);
+//				} else {
+					return version;
+//				}
+			} else throw new IllegalArgumentException("Unable to normalise version: " + this.project.getVersion());
+//		}
 	}
 }
 
