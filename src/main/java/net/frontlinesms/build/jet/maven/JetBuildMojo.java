@@ -235,7 +235,7 @@ public class JetBuildMojo extends AbstractMojo {
 	}
 
 	/**
-	 * Convert the Maven Project's version number to one that is acceptable to JetCompiler.
+	 * Convert the Maven Project's version number to one that is acceptable to Jet packer.
 	 * This should be of the form W.X.Y.Z.
 	 * Please note any other restrictions as and when they are discovered.
 	 * @return
