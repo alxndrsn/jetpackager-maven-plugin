@@ -17,16 +17,16 @@ import static org.mockito.Mockito.*;
  */
 public class JetBuildMojoTest extends TestCase {
 	public void testGetNormalisedVersionNumber() {
-		testGetNormalisedVersionNumber("1", "1");
-		testGetNormalisedVersionNumber("1.2", "1.2");
-		testGetNormalisedVersionNumber("1.2.3", "1.2.3");
+		testGetNormalisedVersionNumber("1", "1.0.0.0");
+		testGetNormalisedVersionNumber("1.2", "1.2.0.0");
+		testGetNormalisedVersionNumber("1.2.3", "1.2.3.0");
 		testGetNormalisedVersionNumber("1.2.3.4", "1.2.3.4");
 		testGetNormalisedVersionNumber("11.12.13.14", "11.12.13.14"); // i GUESS jet will be happy with this.  if not, please rewrite the test
 		testGetNormalisedVersionNumber("01.2.3.4", "1.2.3.4");
-		testGetNormalisedVersionNumber("1.00.3", "1.0.3");
-		testGetNormalisedVersionNumber("1.2.03", "1.2.3");
-		testGetNormalisedVersionNumber("1.0.2", "1.0.2");
-		testGetNormalisedVersionNumber("1.20.03-beta", "1.20.3");
+		testGetNormalisedVersionNumber("1.00.3", "1.0.3.0");
+		testGetNormalisedVersionNumber("1.2.03", "1.2.3.0");
+		testGetNormalisedVersionNumber("1.0.2", "1.0.2.0");
+		testGetNormalisedVersionNumber("1.20.03-beta", "1.20.3.0");
 		testGetNormalisedVersionNumber("0.0.0.0", "0.0.0.0");
 		testGetNormalisedVersionNumber("00000.00.0000.00", "0.0.0.0");
 	}

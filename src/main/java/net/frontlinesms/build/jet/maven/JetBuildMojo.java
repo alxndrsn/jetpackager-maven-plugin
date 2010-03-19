@@ -2,6 +2,7 @@ package net.frontlinesms.build.jet.maven;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
@@ -14,6 +15,7 @@ import net.frontlinesms.build.jet.pack.JetPacker;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.model.FileSet;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -28,10 +30,10 @@ import org.apache.maven.project.MavenProject;
  */
 public class JetBuildMojo extends AbstractMojo {
 	private static final File COMPILE_WORKINGDIRECTORY = new File("target/jet-packager/compile");
-	private static final File COMPILE_RESOURCEDIRECTORY = new File(COMPILE_WORKINGDIRECTORY, "resources");
 	private static final String SPLASH_IMAGE_PATH = "resources/splash.jpg";
+	private static final String ICON_PATH = "resources/icon.ico";
 	private static final File RESOURCE_SPLASH_IMAGE = new File(COMPILE_WORKINGDIRECTORY, SPLASH_IMAGE_PATH);
-	private static final File RESOURCE_PROGRAM_ICON = new File(COMPILE_RESOURCEDIRECTORY, "icon.ico");
+	private static final File RESOURCE_PROGRAM_ICON = new File(COMPILE_WORKINGDIRECTORY, ICON_PATH);
 	private static final String JPN_FILE_PATH = "temp/frontlinesms.jpn";
 
 	private static final File PACK_WORKINGDIRECTORY = new File("target/jet-packager/pack");
@@ -67,6 +69,18 @@ public class JetBuildMojo extends AbstractMojo {
      * @parameter
      * @required */
     private String programExecutableName;
+    /** The contents of the installer package.
+     * @parameter
+     * @required */
+	private List<FileSet> packageContents;
+    /** Name of the directory in the Windows Start Menu to install shortcuts to.
+     * @parameter
+     * @required */
+	private String startMenuProgramFolderRoot;
+    /** Name of the subdirectory of Program Files to install the application to.
+     * @parameter
+     * @required */
+	private String programFilesHome;
 	
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		getLog().info("Starting JetBuild Mojo...");
@@ -93,7 +107,8 @@ public class JetBuildMojo extends AbstractMojo {
 		JetCompiler compiler = new JetCompiler(COMPILE_WORKINGDIRECTORY);
 		compiler.configureDefaults();
 		try {
-			compiler.doCompile(getCompileProfile());
+			int exitCode = compiler.doCompile(getCompileProfile());
+			if(exitCode != 0) throw new JetCompileException("Compilation failed with status: " + exitCode);
 		} catch (IOException ex) { throw new JetCompileException("Exception doing jet compile.", ex); }
 	}
 
@@ -117,7 +132,7 @@ public class JetBuildMojo extends AbstractMojo {
 	private JetCompileProfile getCompileProfile() {
 		return new JetCompileProfile(COMPILE_WORKINGDIRECTORY,
 				JPN_FILE_PATH, getJavaMainClass(),
-				getOutputName(), SPLASH_IMAGE_PATH,
+				getOutputName(), SPLASH_IMAGE_PATH, ICON_PATH,
 				getVersionInfoCompanyName(), getVersionInfoFileDescription(),
 				getVersionInfoCopyrightYear(), getVersionInfoCopyrightOwner(),
 				getVersionInfoProductName(), getVersionInfoNumber());
@@ -144,13 +159,18 @@ public class JetBuildMojo extends AbstractMojo {
 		JetPacker packer = new JetPacker(PACK_WORKINGDIRECTORY);
 		packer.configureDefaults();
 		try {
-			packer.doPack(getPackProfile());
+			int exitCode = packer.doPack(getPackProfile());
+			if(exitCode != 0) throw new JetPackException("Pack failed with status: " + exitCode);
 		} catch (IOException ex) { throw new JetPackException("Exception doing jet pack.", ex); }
 	}
 
 	private void initPackResources() throws JetPackException {
-		// TODO Copy compiled .exe to the working directory
-//		FileUtils.copyFile(new File(COMPILE_WORKINGDIRECTORY, ), new File(PACK_WORKINGDIRECTORY, ))
+		// Copy compiled .exe to the working directory
+		try {
+			FileUtils.copyFile(
+					new File(COMPILE_WORKINGDIRECTORY, getExecutableName() + ".exe"),
+					new File(PACK_WORKINGDIRECTORY, getExecutableName() + ".exe"));
+		} catch (IOException ex) { throw new JetPackException("Unable to copy executable file to pack working dir.", ex); }
 		
 		// Copy pack classpath to the working directory
 		File cpDir = new File(PACK_WORKINGDIRECTORY, "classpath");
@@ -159,8 +179,19 @@ public class JetBuildMojo extends AbstractMojo {
 			copyArtifacts(cpDir, Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
 		} catch (IOException ex) { throw new JetPackException("Unable to copy artifacts to classpath directory.", ex); }
 		
-		// TODO Copy pack resources to the working directory
+		// Copy pack resources to the working directory
 		File resDir = new File(PACK_WORKINGDIRECTORY, "packageContent");
+		for(File packContentFileOrFolder : getPackageContents()) {
+			if(packContentFileOrFolder.isFile()) {
+				try {
+					FileUtils.copyFileToDirectory(packContentFileOrFolder, resDir);
+				} catch (IOException ex) { throw new JetPackException("Error copying packageContent file: " + packContentFileOrFolder.getAbsolutePath(), ex); }
+			} else if(packContentFileOrFolder.isDirectory()) {
+				try {
+					FileUtils.copyDirectoryToDirectory(packContentFileOrFolder, resDir);
+				} catch (IOException ex) { throw new JetPackException("Error copying directory file: " + packContentFileOrFolder.getAbsolutePath(), ex); }
+			} else throw new RuntimeException("Not sure what to do with file: " + packContentFileOrFolder.getAbsolutePath());
+		}
 	}
 
 	private JetPackProfile getPackProfile() {
@@ -171,45 +202,21 @@ public class JetBuildMojo extends AbstractMojo {
 				getProgramFilesHome());
 	}
 	
-	private String getProductName() {
-		// TODO Auto-generated method stub
-		return null;
+	private List<File> getPackageContents() throws JetPackException { 
+		try {
+			return FileSetTransformer.toFileList(this.packageContents);
+		} catch (IOException ex) {
+			throw new JetPackException("Exception thrown getting package contents.", ex);
+		}
 	}
-
-	private String getProductVersion() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private String getProductVersionStandardised() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private String getProductDescription() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private String getProductVendor() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private String getExecutableName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private String getStartMenuProgramFolderRoot() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private String getProgramFilesHome() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	private String getProductName() { return this.programExecutableName; }
+	private String getProductVersion() { return this.project.getVersion(); }
+	private String getProductVersionStandardised() { return this.getNormalisedVersionNumber(); }
+	private String getProductDescription() { return this.programExecutableName; }
+	private String getProductVendor() { return this.programVendor; }
+	private String getExecutableName() { return this.programExecutableName; }
+	private String getStartMenuProgramFolderRoot() { return this.startMenuProgramFolderRoot; }
+	private String getProgramFilesHome() { return this.programFilesHome; }
 
 	@SuppressWarnings("unchecked")
 	private void copyArtifacts(File targetDirectory, String...scopes) throws IOException {
@@ -227,33 +234,19 @@ public class JetBuildMojo extends AbstractMojo {
 		}
 	}
 
-//	private static final String _1_9_1_D_0_3_1_9_1_D_$ = "^([1-9]{1}\\d*\\.){0,3}[1-9]{1}\\d*$";
-	private static final String _1_9_1_D_0_3_1_9_1_D_$ = "^(0|([1-9]{1}\\d*\\.)){0,3}(0|([1-9]{1}\\d*))$";
-	
 	String getNormalisedVersionNumber() {
 		String version = this.project.getVersion();
-//		if(version.matches(_1_9_1_D_0_3_1_9_1_D_$)) {
-//			return version;
-//		} else {
-			// remove all non-digits and points
-			version = version.replaceAll("[^\\d\\.]", "");
-			// remove all excess zeros from the start
-			while(version.matches("^0\\d+\\..*")) {
-				version = version.substring(1);
-			}
-			// remove all excess zeros from after dot characters
-//			version = version.replaceAll("\\.0(0+)", "\\.0");
-			version = version.replaceAll("\\.0+(\\d+)", "\\.$1");
-			if(version.length() > 0) {
-//				System.out.println("Version: " + version);
-//				if(!version.matches(_1_9_1_D_0_3_1_9_1_D_$)) {
-//					throw new IllegalArgumentException(
-//							"Failed to normalise version number: " + this.project.getVersion() + "->" + version);
-//				} else {
-					return version;
-//				}
-			} else throw new IllegalArgumentException("Unable to normalise version: " + this.project.getVersion());
-//		}
+		// remove all non-digits and points
+		version = version.replaceAll("[^\\d\\.]", "");
+		// remove all excess zeros from the start
+		while(version.matches("^0\\d+\\..*")) {
+			version = version.substring(1);
+		}
+		// remove all excess zeros from after dot characters
+		version = version.replaceAll("\\.0+(\\d+)", "\\.$1");
+		if(version.length() > 0) {
+				return version;
+		} else throw new IllegalArgumentException("Unable to normalise version: " + this.project.getVersion());
 	}
 }
 
@@ -285,4 +278,32 @@ class JetPackException extends JetBuildException {
 	public JetPackException(String message, Throwable cause) {
 		super(message, cause);
 	}
+}
+
+class FileSetTransformer {
+	public static List<File> toFileList(List<FileSet> fileSets) throws IOException {
+    	ArrayList<File> files = new ArrayList<File>();
+    	for(FileSet fileSet : fileSets) {
+    		files.addAll(toFileList(fileSet));
+    	}
+    	return files;
+    }
+
+    @SuppressWarnings("unchecked")
+	public static List<File> toFileList(FileSet fileSet) throws IOException {
+            File directory = new File(fileSet.getDirectory());
+            String includes = toString(fileSet.getIncludes());
+            String excludes = toString(fileSet.getExcludes());
+            return org.codehaus.plexus.util.FileUtils.getFiles(directory, includes, excludes);
+    }
+
+    private static String toString(List<String> strings) {
+            StringBuilder sb = new StringBuilder();
+            for (String string : strings) {
+                    if (sb.length() > 0)
+                            sb.append(", ");
+                    sb.append(string);
+            }
+            return sb.toString();
+    }
 }
