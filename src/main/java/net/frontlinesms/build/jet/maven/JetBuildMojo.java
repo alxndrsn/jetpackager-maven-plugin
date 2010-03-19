@@ -27,6 +27,10 @@ import org.apache.maven.project.MavenProject;
  */
 public class JetBuildMojo extends AbstractMojo {
 	private static final File COMPILE_WORKINGDIRECTORY = new File("target/jet-packager/compile");
+	private static final File COMPILE_RESOURCEDIRECTORY = new File(COMPILE_WORKINGDIRECTORY, "resources");
+	private static final File RESOURCE_SPLASH_IMAGE = new File(COMPILE_RESOURCEDIRECTORY, "splash.jpg");
+	private static final File RESOURCE_PROGRAM_ICON = new File(COMPILE_RESOURCEDIRECTORY, "icon.ico");
+
 	private static final File PACK_WORKINGDIRECTORY = new File("target/jet-packager/pack");
 
 //> INSTANCE VARIABLES
@@ -36,10 +40,15 @@ public class JetBuildMojo extends AbstractMojo {
      * @readonly
      */
     private MavenProject project;
+    /** The splash image used when the compiled program is starting up.
+     * @parameter */
+    private File splashImage;
+    /** The program icon used for the .exe file of the compiled program.
+     * @parameter */
+    private File programIcon;
 	
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		getLog().info("Starting JetBuild Mojo...");
-
 
 		getLog().info("Initialising compilation resources...");
 		initCompileResources();
@@ -75,8 +84,13 @@ public class JetBuildMojo extends AbstractMojo {
 			copyArtifacts(cpDir, Artifact.SCOPE_COMPILE, Artifact.SCOPE_PROVIDED);
 		} catch (IOException ex) { throw new JetCompileException("Unable to copy artifacts to classpath directory.", ex); }
 
-		// TODO Copy compile resources to the working directory
-		File resDir = new File(PACK_WORKINGDIRECTORY, "resources");
+		// Copy compile resources to the working directory
+		try {
+			FileUtils.copyFile(this.splashImage, RESOURCE_SPLASH_IMAGE);
+			FileUtils.copyFile(this.programIcon, RESOURCE_PROGRAM_ICON);
+		} catch(IOException ex) {
+			throw new JetCompileException("Problem copying compile resource.", ex);
+		}
 	}
 	
 	private JetCompileProfile getCompileProfile() {
