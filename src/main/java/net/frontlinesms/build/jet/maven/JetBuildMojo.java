@@ -80,6 +80,60 @@ public class JetBuildMojo extends AbstractMojo {
 	}
 	
 	private JetCompileProfile getCompileProfile() {
+		return new JetCompileProfile(COMPILE_WORKINGDIRECTORY,
+				getJpnPath(), getJavaMainClass(),
+				getOutputName(), getSplashImagePath(),
+				getVersionInfoCompanyName(), getVersionInfoFileDescription(),
+				getVersionInfoCopyrightYear(), getVersionInfoCopyrightOwner(),
+				getVersionInfoProductName(), getVersionInfoNumber());
+	}
+
+	private String getJpnPath() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String getJavaMainClass() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String getOutputName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String getSplashImagePath() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String getVersionInfoCompanyName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String getVersionInfoFileDescription() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String getVersionInfoCopyrightYear() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String getVersionInfoCopyrightOwner() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String getVersionInfoProductName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String getVersionInfoNumber() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -93,21 +147,69 @@ public class JetBuildMojo extends AbstractMojo {
 		} catch (IOException ex) { throw new JetPackException("Exception doing jet pack.", ex); }
 	}
 
-	private void initPackResources() {
+	private void initPackResources() throws JetPackException {
 		// TODO Copy compiled .exe to the working directory
+//		FileUtils.copyFile(new File(COMPILE_WORKINGDIRECTORY, ), new File(PACK_WORKINGDIRECTORY, ))
 		
-		// TODO Copy pack classpath to the working directory
+		// Copy pack classpath to the working directory
 		File cpDir = new File(PACK_WORKINGDIRECTORY, "classpath");
+		if(!cpDir.mkdirs()) throw new JetPackException("Unable to create classpath directory at: " + cpDir.getAbsolutePath());
+		try {
+			copyArtifacts(cpDir, Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
+		} catch (IOException ex) { throw new JetPackException("Unable to copy artifacts to classpath directory.", ex); }
 		
 		// TODO Copy pack resources to the working directory
 		File resDir = new File(PACK_WORKINGDIRECTORY, "packageContent");
 	}
 
 	private JetPackProfile getPackProfile() {
+		return new JetPackProfile(PACK_WORKINGDIRECTORY, getProductName(),
+				getProductVersion(), getProductVersionStandardised(),
+				getProductDescription(), getProductVendor(),
+				getExecutableName(), getStartMenuProgramFolderRoot(),
+				getProgramFilesHome());
+	}
+	
+	private String getProductName() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
+	private String getProductVersion() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String getProductVersionStandardised() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String getProductDescription() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String getProductVendor() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String getExecutableName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String getStartMenuProgramFolderRoot() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String getProgramFilesHome() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	@SuppressWarnings("unchecked")
 	private void copyArtifacts(File targetDirectory, String...scopes) throws IOException {
 		getLog().debug("Copying artifacts to directory: " + targetDirectory.getPath() + " with scopes: " + Arrays.deepToString(scopes));
@@ -147,6 +249,9 @@ class JetCompileException extends JetBuildException {
 
 @SuppressWarnings("serial")
 class JetPackException extends JetBuildException {
+	public JetPackException(String message) {
+		super(message);
+	}
 	public JetPackException(String message, Throwable cause) {
 		super(message, cause);
 	}
