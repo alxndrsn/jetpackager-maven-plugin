@@ -234,6 +234,12 @@ public class JetBuildMojo extends AbstractMojo {
 		}
 	}
 
+	/**
+	 * Convert the Maven Project's version number to one that is acceptable to JetCompiler.
+	 * This should be of the form W.X.Y.Z.
+	 * Please note any other restrictions as and when they are discovered.
+	 * @return
+	 */
 	String getNormalisedVersionNumber() {
 		String version = this.project.getVersion();
 		// remove all non-digits and points
@@ -244,9 +250,16 @@ public class JetBuildMojo extends AbstractMojo {
 		}
 		// remove all excess zeros from after dot characters
 		version = version.replaceAll("\\.0+(\\d+)", "\\.$1");
+		while(count(version, '.') < 3) version += ".0";
 		if(version.length() > 0) {
 				return version;
 		} else throw new IllegalArgumentException("Unable to normalise version: " + this.project.getVersion());
+	}
+	
+	private static int count(String haystack, char needle) {
+		int count = 0;
+		for(char c : haystack.toCharArray()) if(c == needle) ++count;
+		return count;
 	}
 }
 
