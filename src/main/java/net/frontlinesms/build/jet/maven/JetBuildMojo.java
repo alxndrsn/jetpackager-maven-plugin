@@ -86,7 +86,9 @@ public class JetBuildMojo extends AbstractMojo {
 
 		// Copy compile resources to the working directory
 		try {
+			if(this.splashImage == null) throw new JetCompileException("splashImage not set.");
 			FileUtils.copyFile(this.splashImage, RESOURCE_SPLASH_IMAGE);
+			if(this.programIcon == null) throw new JetCompileException("programIcon not set.");
 			FileUtils.copyFile(this.programIcon, RESOURCE_PROGRAM_ICON);
 		} catch(IOException ex) {
 			throw new JetCompileException("Problem copying compile resource.", ex);
