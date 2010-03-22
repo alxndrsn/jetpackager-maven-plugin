@@ -81,23 +81,34 @@ public class JetBuildMojo extends AbstractMojo {
      * @parameter
      * @required */
 	private String programFilesHome;
+
+    /** Set to false if you do not want the compilation or associated initialisation to be performed
+     * @parameter default-value=true */
+	private boolean doCompile;
+    /** Set to false if you do not want the packing or associated initialisation to be performed
+     * @parameter default-value=true */
+	private boolean doPack;
 	
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		getLog().info("Starting JetBuild Mojo...");
 
-		getLog().info("Initialising compilation resources...");
-		initCompileResources();
-		getLog().info("Compile resources initialised.");
-		getLog().info("Calling Jet compiler...");
-		doCompile();
-		getLog().info("...compilation complete.");
+		if(doCompile) {
+			getLog().info("Initialising compilation resources...");
+			initCompileResources();
+			getLog().info("Compile resources initialised.");
+			getLog().info("Calling Jet compiler...");
+			doCompile();
+			getLog().info("...compilation complete.");
+		}
 
-		getLog().info("Initialising pack resources...");
-		initPackResources();
-		getLog().info("Pack resources initialised.");
-		getLog().info("Calling Jet packer...");
-		doPack();
-		getLog().info("...packing complete.");
+		if(doPack) {
+			getLog().info("Initialising pack resources...");
+			initPackResources();
+			getLog().info("Pack resources initialised.");
+			getLog().info("Calling Jet packer...");
+			doPack();
+			getLog().info("...packing complete.");
+		}
 
 		getLog().info("...JetBuild complete.");
 	}
