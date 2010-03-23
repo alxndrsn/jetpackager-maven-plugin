@@ -99,7 +99,7 @@ public class JetBuildMojo extends AbstractMojo {
 			getLog().info("Calling Jet compiler...");
 			doCompile();
 			getLog().info("...compilation complete.");
-		}
+		} else getLog().info("doCompile = false.  Not compiling.");
 
 		if(doPack) {
 			getLog().info("Initialising pack resources...");
@@ -108,7 +108,7 @@ public class JetBuildMojo extends AbstractMojo {
 			getLog().info("Calling Jet packer...");
 			doPack();
 			getLog().info("...packing complete.");
-		}
+		} else getLog().info("doPack = false.  Not packing.");
 
 		getLog().info("...JetBuild complete.");
 	}
@@ -195,11 +195,12 @@ public class JetBuildMojo extends AbstractMojo {
 		for(File packContentFileOrFolder : getPackageContents()) {
 			if(packContentFileOrFolder.isFile()) {
 				try {
-					FileUtils.copyFileToDirectory(packContentFileOrFolder, resDir);
+					// Copy files, maintaining the relative paths
+					FileUtils.copyFile(packContentFileOrFolder, new File(resDir, packContentFileOrFolder.getPath()));
 				} catch (IOException ex) { throw new JetPackException("Error copying packageContent file: " + packContentFileOrFolder.getAbsolutePath(), ex); }
 			} else if(packContentFileOrFolder.isDirectory()) {
 				try {
-					FileUtils.copyDirectoryToDirectory(packContentFileOrFolder, resDir);
+					FileUtils.copyDirectoryToDirectory(packContentFileOrFolder, new File(resDir, packContentFileOrFolder.getPath()));
 				} catch (IOException ex) { throw new JetPackException("Error copying directory file: " + packContentFileOrFolder.getAbsolutePath(), ex); }
 			} else throw new RuntimeException("Not sure what to do with file: " + packContentFileOrFolder.getAbsolutePath());
 		}
