@@ -13,18 +13,7 @@ import junit.framework.TestCase;
  * Unit tests for {@link FileSet}.
  * @author Alex Anderson <alex@frontlinesms.com>
  */
-public class TheFileSetTest extends TestCase {
-	/** Test {@link FileSet#toFileList()} 
-	 * @throws IOException */
-	public void testToFileList() throws IOException {
-		FileSet fs = new FileSet();
-		fs.setDirectory("c:/");
-		List<File> files = fs.toFileList();
-		for(File f : files) {
-			System.out.println("> " + f.getPath());
-		}
-	}
-	
+public class FileSetTest extends TestCase {
 	/** Test {@link FileSet#getRelativePath(File)()} 
 	 * @throws IOException */
 	public void testGetRelativePath() throws IOException {
