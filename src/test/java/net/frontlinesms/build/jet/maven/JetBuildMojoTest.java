@@ -13,6 +13,7 @@ import junit.framework.TestCase;
 import static org.mockito.Mockito.*;
 
 /**
+ * Unit tests for {@link JetBuildMojo}.
  * @author Alex Anderson <alex@frontlinesms.com>
  */
 public class JetBuildMojoTest extends TestCase {

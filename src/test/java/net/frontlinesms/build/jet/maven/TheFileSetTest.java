@@ -30,15 +30,20 @@ public class TheFileSetTest extends TestCase {
 	public void testGetRelativePath() throws IOException {
 		testGetRelativePath(null, "a/b.def", "a/b.def");
 		testGetRelativePath("", "a/b.def", "a/b.def");
-		
 		testGetRelativePath("a/b/c", "a/b/c/d/e.xyz", "d/e.xyz");
+		
+		testGetRelativePath(null, "a\\b.def", "a/b.def");
+		testGetRelativePath("", "a\\b.def", "a/b.def");
+		testGetRelativePath("a\\b\\c", "a\\b\\c\\d\\e.xyz", "d/e.xyz");
+		
+		testGetRelativePath("src/assemble/resources/package", "src\\assemble\\resources\\package\\help\\contactmanager.htm", "help/contactmanager.htm");
+		testGetRelativePath("src/assemble/resources/package/", "src\\assemble\\resources\\package\\help\\contactmanager.htm", "help/contactmanager.htm");
+
+		testGetRelativePath("src\\assemble\\resources\\package", "src/assemble/resources/package/help/contactmanager.htm", "help/contactmanager.htm");
+		testGetRelativePath("src\\assemble\\resources\\package\\", "src/assemble/resources/package/help/contactmanager.htm", "help/contactmanager.htm");
 	}
 	
 	private void testGetRelativePath(String filesetDirectory, String originalPath, String expectedRelativePath) {
-		filesetDirectory = normaliseFilePath(filesetDirectory);
-		originalPath = normaliseFilePath(originalPath);
-		expectedRelativePath = normaliseFilePath(expectedRelativePath);
-		
 		FileSet fs = new FileSet();
 		fs.setDirectory(filesetDirectory);
 		
@@ -47,12 +52,7 @@ public class TheFileSetTest extends TestCase {
 		assertEquals(expectedRelativePath, actualRelativePath);
 	}
 	
-	private String normaliseFilePath(String path) {
-		if(File.separatorChar != '/') {
-			if(path != null) {
-				path = path.replace('/', File.separatorChar);
-			}
-		}
-		return path;
+	public static void main(String[] args) {
+		System.out.println("File sep: " + File.separator);
 	}
 }

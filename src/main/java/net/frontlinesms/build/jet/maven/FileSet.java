@@ -6,8 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileSet extends org.apache.maven.model.FileSet {
-	
-//> INSTANCE METHODS
+
+	private static final char NORMAL_FILE_SEPERATOR = '/';
+	private static final String NORMAL_FILE_SEPERATOR_STRING = "" + NORMAL_FILE_SEPERATOR;
+
+	//> INSTANCE METHODS
     @SuppressWarnings("unchecked")
 	public List<File> toFileList() throws IOException {
         File directory = new File(this.getDirectory());
@@ -21,35 +24,36 @@ public class FileSet extends org.apache.maven.model.FileSet {
      * @return path of the file relative to {@link #getDirectory()}
      */
     public String getRelativePath(File file) {
-    	String directory = this.getDirectory();
-    	String path = file.getPath();
+    	String directory = normaliseFilePath(this.getDirectory());
+    	String path = normaliseFilePath(file.getPath());
 		if(directory == null || directory.length() == 0) {
     		return path;
     	} else {
-	    	if(!directory.endsWith(File.separator)) {
-	    		directory += File.separatorChar;
+	    	if(!directory.endsWith(NORMAL_FILE_SEPERATOR_STRING)) {
+	    		directory += NORMAL_FILE_SEPERATOR;
 	    	}
 	    	assert(path.startsWith(directory)) : "path '" + path + "' is not relative to this.getDirectory(): '" + directory + "'";
 	    	return path.substring(directory.length());
     	}
     }
-    
-//> STATIC METHODS
-	public static List<File> toFileList(List<FileSet> fileSets) throws IOException {
-    	ArrayList<File> files = new ArrayList<File>();
-    	for(FileSet fileSet : fileSets) {
-    		files.addAll(fileSet.toFileList());
-    	}
-    	return files;
-    }
 
+//> STATIC METHODS
     private static String toString(List<String> strings) {
-            StringBuilder sb = new StringBuilder();
-            for (String string : strings) {
-                    if (sb.length() > 0)
-                            sb.append(", ");
-                    sb.append(string);
-            }
-            return sb.toString();
+        StringBuilder sb = new StringBuilder();
+        for (String string : strings) {
+                if (sb.length() > 0)
+                        sb.append(", ");
+                sb.append(string);
+        }
+        return sb.toString();
     }
+    
+    private static String normaliseFilePath(String path) {
+		if(File.separatorChar != NORMAL_FILE_SEPERATOR) {
+			if(path != null) {
+				path = path.replace(File.separatorChar, NORMAL_FILE_SEPERATOR);
+			}
+		}
+		return path;
+	}
 }

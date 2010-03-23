@@ -190,17 +190,33 @@ public class JetBuildMojo extends AbstractMojo {
 		
 		// Copy pack resources to the working directory
 		File resDir = new File(PACK_WORKINGDIRECTORY, "packageContent");
-		for(File packContentFileOrFolder : getPackageContents()) {
-			if(packContentFileOrFolder.isFile()) {
-				try {
-					// Copy files, maintaining the relative paths
-					FileUtils.copyFile(packContentFileOrFolder, new File(resDir, packContentFileOrFolder.getPath()));
-				} catch (IOException ex) { throw new JetPackException("Error copying packageContent file: " + packContentFileOrFolder.getAbsolutePath(), ex); }
-			} else if(packContentFileOrFolder.isDirectory()) {
-				try {
-					FileUtils.copyDirectoryToDirectory(packContentFileOrFolder, new File(resDir, packContentFileOrFolder.getPath()));
-				} catch (IOException ex) { throw new JetPackException("Error copying directory file: " + packContentFileOrFolder.getAbsolutePath(), ex); }
-			} else throw new RuntimeException("Not sure what to do with file: " + packContentFileOrFolder.getAbsolutePath());
+		for(FileSet fs : getPackageContents()) {
+			List<File> fileSetAsList;
+			try {
+				fileSetAsList = fs.toFileList();
+			} catch (IOException ex) { throw new JetPackException("Error getting fileSet as list.", ex); }
+			for(File sourceFile : fileSetAsList) {
+				File destinationFile = new File(resDir, fs.getRelativePath(sourceFile));
+				if(sourceFile.isFile()) {
+					try {
+						FileUtils.copyFile(sourceFile, destinationFile);
+					} catch (IOException ex) { throw new JetPackException("Error copying packageContent file: " + sourceFile.getAbsolutePath(), ex); }
+				} else if(sourceFile.isDirectory()) {
+					try {
+						FileUtils.copyDirectory(sourceFile, destinationFile);
+					} catch (IOException ex) { throw new JetPackException("Error copying directory file: " + sourceFile.getAbsolutePath(), ex); }
+				} else throw new RuntimeException("Not sure what to do with file: " + sourceFile.getAbsolutePath());
+			}
+//			if(packContentFileOrFolder.isFile()) {
+//				try {
+//					// Copy files, maintaining the relative paths
+//					FileUtils.copyFile(packContentFileOrFolder, new File(resDir, packContentFileOrFolder.getPath()));
+//				} catch (IOException ex) { throw new JetPackException("Error copying packageContent file: " + packContentFileOrFolder.getAbsolutePath(), ex); }
+//			} else if(packContentFileOrFolder.isDirectory()) {
+//				try {
+//					FileUtils.copyDirectoryToDirectory(packContentFileOrFolder, new File(resDir, packContentFileOrFolder.getPath()));
+//				} catch (IOException ex) { throw new JetPackException("Error copying directory file: " + packContentFileOrFolder.getAbsolutePath(), ex); }
+//			} else throw new RuntimeException("Not sure what to do with file: " + packContentFileOrFolder.getAbsolutePath());
 		}
 	}
 
@@ -212,13 +228,7 @@ public class JetBuildMojo extends AbstractMojo {
 				getProgramFilesHome());
 	}
 	
-	private List<File> getPackageContents() throws JetPackException { 
-		try {
-			return FileSet.toFileList(this.packageContents);
-		} catch (IOException ex) {
-			throw new JetPackException("Exception thrown getting package contents.", ex);
-		}
-	}
+	private List<FileSet> getPackageContents() { return this.packageContents; }
 	private String getProductName() { return this.programExecutableName; }
 	private String getProductVersion() { return this.project.getVersion(); }
 	private String getProductVersionStandardised() { return this.getNormalisedVersionNumber(); }
