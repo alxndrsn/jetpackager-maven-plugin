@@ -48,11 +48,11 @@ public class FileSet extends org.apache.maven.model.FileSet {
         return sb.toString();
     }
     
+    /** @return the path with all instances of the Windows file separator ('\\') replaced with
+     * the unix one ('/') */
     private static String normaliseFilePath(String path) {
-		if(File.separatorChar != NORMAL_FILE_SEPERATOR) {
-			if(path != null) {
-				path = path.replace(File.separatorChar, NORMAL_FILE_SEPERATOR);
-			}
+		if(path != null) {
+			path = path.replace('\\', NORMAL_FILE_SEPERATOR);
 		}
 		return path;
 	}
