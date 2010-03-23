@@ -2,7 +2,6 @@ package net.frontlinesms.build.jet.maven;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
@@ -15,7 +14,6 @@ import net.frontlinesms.build.jet.pack.JetPacker;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.model.FileSet;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -216,7 +214,7 @@ public class JetBuildMojo extends AbstractMojo {
 	
 	private List<File> getPackageContents() throws JetPackException { 
 		try {
-			return FileSetTransformer.toFileList(this.packageContents);
+			return FileSet.toFileList(this.packageContents);
 		} catch (IOException ex) {
 			throw new JetPackException("Exception thrown getting package contents.", ex);
 		}
@@ -303,32 +301,4 @@ class JetPackException extends JetBuildException {
 	public JetPackException(String message, Throwable cause) {
 		super(message, cause);
 	}
-}
-
-class FileSetTransformer {
-	public static List<File> toFileList(List<FileSet> fileSets) throws IOException {
-    	ArrayList<File> files = new ArrayList<File>();
-    	for(FileSet fileSet : fileSets) {
-    		files.addAll(toFileList(fileSet));
-    	}
-    	return files;
-    }
-
-    @SuppressWarnings("unchecked")
-	public static List<File> toFileList(FileSet fileSet) throws IOException {
-            File directory = new File(fileSet.getDirectory());
-            String includes = toString(fileSet.getIncludes());
-            String excludes = toString(fileSet.getExcludes());
-            return org.codehaus.plexus.util.FileUtils.getFiles(directory, includes, excludes);
-    }
-
-    private static String toString(List<String> strings) {
-            StringBuilder sb = new StringBuilder();
-            for (String string : strings) {
-                    if (sb.length() > 0)
-                            sb.append(", ");
-                    sb.append(string);
-            }
-            return sb.toString();
-    }
 }
