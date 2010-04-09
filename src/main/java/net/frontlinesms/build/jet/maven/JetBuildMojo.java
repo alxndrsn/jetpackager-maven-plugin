@@ -9,6 +9,7 @@ import java.util.Set;
 
 import net.frontlinesms.build.jet.compile.JetCompileProfile;
 import net.frontlinesms.build.jet.compile.JetCompiler;
+import net.frontlinesms.build.jet.pack.JetPackCompression;
 import net.frontlinesms.build.jet.pack.JetPackProfile;
 import net.frontlinesms.build.jet.pack.JetPacker;
 
@@ -79,7 +80,10 @@ public class JetBuildMojo extends AbstractMojo {
      * @parameter
      * @required */
 	private String programFilesHome;
-
+	/** The level of compression to apply to the packed install file.
+	 * @parameter default-value="1"
+	 */
+	private Integer compressionLevel;
     /** Set to false if you do not want the compilation or associated initialisation to be performed
      * @parameter default-value=true */
 	private boolean doCompile;
@@ -207,16 +211,6 @@ public class JetBuildMojo extends AbstractMojo {
 					} catch (IOException ex) { throw new JetPackException("Error copying directory file: " + sourceFile.getAbsolutePath(), ex); }
 				} else throw new RuntimeException("Not sure what to do with file: " + sourceFile.getAbsolutePath());
 			}
-//			if(packContentFileOrFolder.isFile()) {
-//				try {
-//					// Copy files, maintaining the relative paths
-//					FileUtils.copyFile(packContentFileOrFolder, new File(resDir, packContentFileOrFolder.getPath()));
-//				} catch (IOException ex) { throw new JetPackException("Error copying packageContent file: " + packContentFileOrFolder.getAbsolutePath(), ex); }
-//			} else if(packContentFileOrFolder.isDirectory()) {
-//				try {
-//					FileUtils.copyDirectoryToDirectory(packContentFileOrFolder, new File(resDir, packContentFileOrFolder.getPath()));
-//				} catch (IOException ex) { throw new JetPackException("Error copying directory file: " + packContentFileOrFolder.getAbsolutePath(), ex); }
-//			} else throw new RuntimeException("Not sure what to do with file: " + packContentFileOrFolder.getAbsolutePath());
 		}
 	}
 
@@ -225,7 +219,7 @@ public class JetBuildMojo extends AbstractMojo {
 				getProductVersion(), getProductVersionStandardised(),
 				getProductDescription(), getProductVendor(),
 				getExecutableName(), getStartMenuProgramFolderRoot(),
-				getProgramFilesHome());
+				getProgramFilesHome(), getCompressionLevel());
 	}
 	
 	private List<FileSet> getPackageContents() { return this.packageContents; }
@@ -237,6 +231,9 @@ public class JetBuildMojo extends AbstractMojo {
 	private String getExecutableName() { return this.programExecutableName; }
 	private String getStartMenuProgramFolderRoot() { return this.startMenuProgramFolderRoot; }
 	private String getProgramFilesHome() { return this.programFilesHome; }
+	private JetPackCompression getCompressionLevel() {
+		return JetPackCompression.getFromLevel(this.compressionLevel);
+	}
 
 	@SuppressWarnings("unchecked")
 	private void copyArtifacts(File targetDirectory, String...scopes) throws IOException {
