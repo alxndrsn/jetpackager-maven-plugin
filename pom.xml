@@ -7,6 +7,10 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<description>Build Excelsior JET packages from Java</description>
 	
+	<scm>
+		<connection>scm:git:git://git@github.com/alexandergeorge/jetpackager-maven-plugin.git</connection>
+	</scm>
+	
 	<distributionManagement>
 		<snapshotRepository>
 			<id>cleone.net.repo</id>
