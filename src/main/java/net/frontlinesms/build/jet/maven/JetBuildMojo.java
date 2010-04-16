@@ -7,6 +7,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Set;
 
+import net.frontlinesms.build.jet.ProcessStreamPrinter;
 import net.frontlinesms.build.jet.compile.JetCompileProfile;
 import net.frontlinesms.build.jet.compile.JetCompiler;
 import net.frontlinesms.build.jet.pack.JetPackCompression;
@@ -90,8 +91,36 @@ public class JetBuildMojo extends AbstractMojo {
     /** Set to false if you do not want the packing or associated initialisation to be performed
      * @parameter default-value=true */
 	private boolean doPack;
+
+	/** Lazy-initialised {@link JetPacker} instance.  Should be accessed only by {@link #getPacker()} */
+	private JetPacker packer;
+	/** Lazy-initialised {@link JetCompiler} instance.  Should be accessed only by {@link #getCompiler()} */
+	private JetCompiler compiler;
 	
 	public void execute() throws MojoExecutionException, MojoFailureException {
+		if(!isJetSupported()) {
+			try {
+				Process p = Runtime.getRuntime().exec("xpack");
+				ProcessStreamPrinter psp = ProcessStreamPrinter.createStandardPrinter("xpack", p);
+				psp.startBlocking();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				Process p = Runtime.getRuntime().exec("jc");
+				ProcessStreamPrinter psp = ProcessStreamPrinter.createStandardPrinter("xpack", p);
+				psp.startBlocking();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
+			getLog().warn("Excelsior JET does not appear to be supported on this machine.  Build will not be run.");
+			return;
+		}
+		
 		getLog().info("Starting JetBuild Mojo...");
 
 		if(doCompile) {
@@ -114,13 +143,35 @@ public class JetBuildMojo extends AbstractMojo {
 
 		getLog().info("...JetBuild complete.");
 	}
+	
+//> 
+	private synchronized JetPacker getPacker() {
+		if(this.packer == null) {
+			JetPacker packer = new JetPacker(PACK_WORKINGDIRECTORY);
+			packer.configureDefaults();
+			this.packer = packer;
+		}
+		return this.packer;
+	}
+	
+	private synchronized JetCompiler getCompiler() {
+		if(this.compiler == null) {
+			JetCompiler compiler = new JetCompiler(COMPILE_WORKINGDIRECTORY);
+			compiler.configureDefaults();
+			this.compiler = compiler;
+		}
+		return this.compiler;
+	}
+	
+	/** Check if this machine has jet installed. */
+	public boolean isJetSupported() {
+		return getPacker().isSupported() && getCompiler().isSupported();
+	}
 
 //> COMPILE METHODS
 	private void doCompile() throws JetCompileException {
-		JetCompiler compiler = new JetCompiler(COMPILE_WORKINGDIRECTORY);
-		compiler.configureDefaults();
 		try {
-			int exitCode = compiler.doCompile(getCompileProfile());
+			int exitCode = getCompiler().doCompile(getCompileProfile());
 			if(exitCode != 0) throw new JetCompileException("Compilation failed with status: " + exitCode);
 		} catch (IOException ex) { throw new JetCompileException("Exception doing jet compile.", ex); }
 	}
@@ -169,10 +220,8 @@ public class JetBuildMojo extends AbstractMojo {
 
 //> PACKING METHODS
 	private void doPack() throws JetPackException {
-		JetPacker packer = new JetPacker(PACK_WORKINGDIRECTORY);
-		packer.configureDefaults();
 		try {
-			int exitCode = packer.doPack(getPackProfile());
+			int exitCode = getPacker().doPack(getPackProfile());
 			if(exitCode != 0) throw new JetPackException("Pack failed with status: " + exitCode);
 		} catch (IOException ex) { throw new JetPackException("Exception doing jet pack.", ex); }
 	}
