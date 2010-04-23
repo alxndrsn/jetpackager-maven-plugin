@@ -65,7 +65,7 @@
 		<dependency>
 			<groupId>net.frontlinesms.build</groupId>
 			<artifactId>jetpackager</artifactId>
-			<version>0.0.7-SNAPSHOT</version>
+			<version>0.0.7</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
