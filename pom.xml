@@ -4,7 +4,7 @@
 	<artifactId>jetpackager-maven-plugin</artifactId>
 	<packaging>maven-plugin</packaging>
 	<name>JetPackager Maven Plugin</name>
-	<version>0.0.2</version>
+	<version>0.0.3-SNAPSHOT</version>
 	<description>Maven Mojo for building Excelsior JET packages from Java</description>
 	
 	<scm>
