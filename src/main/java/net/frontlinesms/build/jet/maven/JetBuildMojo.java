@@ -180,6 +180,11 @@ public class JetBuildMojo extends AbstractMojo {
 		// Copy compile classpath to the working directory
 		File cpDir = new File(COMPILE_WORKINGDIRECTORY, "classpath");
 		if(!cpDir.mkdirs()) throw new JetCompileException("Unable to create classpath directory at: " + cpDir.getAbsolutePath());
+		
+		try {
+			copyArtifact(cpDir, project.getArtifact());
+		} catch(IOException ex) { throw new JetCompileException("Unable to locate project artifact.", ex); }
+		
 		try {
 			copyArtifacts(cpDir, Artifact.SCOPE_COMPILE, Artifact.SCOPE_PROVIDED);
 		} catch (IOException ex) { throw new JetCompileException("Unable to copy artifacts to classpath directory.", ex); }
@@ -293,11 +298,15 @@ public class JetBuildMojo extends AbstractMojo {
 			if(!scopesArray.contains(artifact.getScope())) {
 				getLog().debug("Artifact out of scope (" + artifact.getScope() + "): " + artifact.toString());
 			} else {
-				getLog().debug("Copying artifact: " + artifact.toString());
-				File artifactFile = artifact.getFile();
-				FileUtils.copyFile(artifactFile, new File(targetDirectory, artifactFile.getName()));
+				copyArtifact(targetDirectory, artifact);
 			}
 		}
+	}
+	
+	private void copyArtifact(File targetDirectory, Artifact artifact) throws IOException {
+		getLog().debug("Copying artifact: " + artifact.toString());
+		File artifactFile = artifact.getFile();
+		FileUtils.copyFile(artifactFile, new File(targetDirectory, artifactFile.getName()));
 	}
 
 	/**
